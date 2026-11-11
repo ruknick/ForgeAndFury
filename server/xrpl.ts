@@ -8,6 +8,7 @@ import {
   type SubmittableTransaction, type TransactionMetadata,
 } from 'xrpl';
 import type { Config } from './config';
+import { wsAgent } from './proxy';
 import { relicByTaxon } from '../shared/relics';
 import type { RelicDef } from '../shared/types';
 
@@ -44,7 +45,7 @@ export class XrplService {
     if (this.client?.isConnected()) return this.client;
     if (!this.connecting) {
       this.connecting = (async () => {
-        const c = new Client(this.cfg.xrplNetwork, { connectionTimeout: 15000 });
+        const c = new Client(this.cfg.xrplNetwork, { connectionTimeout: 15000, agent: wsAgent() });
         await c.connect();
         this.client = c;
         return c;

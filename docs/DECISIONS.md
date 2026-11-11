@@ -61,6 +61,10 @@ Defaults chosen while building the prototype, mostly where the spec marked an **
 - **Supply stats** (found / minted / burned per relic type) are tracked server-side and shown in the Armory (§12 Economy).
 - `ENABLE_NFT_DEPOSIT=false` hides and blocks deposits (the iOS plan in §12).
 
+- **Verified on Testnet:** `npm run xrpl:smoke` passes (mint → transfer → deposit → burn), and the full M4 demo was run through the real UI: grant a Sword → Mint → send to player B → B deposits → B uses it in level 2. Minting takes about 25 s on Testnet (faucet funding plus 3 validated transactions).
+- **Proxy support:** when `HTTPS_PROXY` is set, the XRPL WebSocket and the faucet requests go through it (`server/proxy.ts`). Without it, nothing changes.
+- **Alternative Testnet node:** if `s.altnet.rippletest.net` is unreachable from your network, set `XRPL_NETWORK=wss://testnet.xrpl-labs.com` (XRPL Labs, port 443). Same ledger, same faucet.
+
 ## Levels (§9)
 
 | # | Setup |
@@ -81,5 +85,4 @@ All levels can be selected from the start (no lock), so it's easy to demo. Progr
 
 ## Not done yet
 
-- `npm run xrpl:smoke` is written but **has not been run against Testnet**: the build sandbox could not reach `*.rippletest.net`. Run it locally first.
 - M5 polish: sound, the Forge meter ability, and Xaman wallet connect are not implemented. The `fortress` objective (stretch goal) is not implemented.

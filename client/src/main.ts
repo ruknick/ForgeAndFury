@@ -35,7 +35,7 @@ async function boot() {
   } catch (e) {
     toast(`Game server unreachable (${(e as Error).message}). You can still play, but relics are disabled.`, 'error', 6000);
   }
-  menu();
+  await menu();
 }
 
 async function refreshMe() {
