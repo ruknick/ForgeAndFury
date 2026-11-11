@@ -1,0 +1,12 @@
+{
+  "id": 4,
+  "name": "The Burial Mound",
+  "intro": "Unearth all 5 relics before your moves run out. One lies deep and needs two clears.",
+  "rows": 9, "cols": 8,
+  "blocked": [{ "r": 0, "c": 3 }, { "r": 0, "c": 4 }],
+  "moves": 26,
+  "objective": { "type": "unearth" },
+  "burials": { "mode": "random", "count": 5, "depth": 1, "deep": 1 },
+  "dropTableOverride": null,
+  "stars": [2000, 4000, 6000]
+}

@@ -1,0 +1,12 @@
+{
+  "id": 5,
+  "name": "Warlord's Keep",
+  "intro": "Storm the keep: score 9,000 points. The Warlord's vault holds better Legendary odds.",
+  "rows": 9, "cols": 9,
+  "blocked": [{ "r": 4, "c": 0 }, { "r": 4, "c": 8 }, { "r": 0, "c": 4 }],
+  "moves": 24,
+  "objective": { "type": "score", "score": 9000 },
+  "burials": { "mode": "random", "count": 3, "depth": 2 },
+  "dropTableOverride": { "common": 0.45, "rare": 0.28, "epic": 0.17, "legendary": 0.10 },
+  "stars": [9000, 12000, 16000]
+}
