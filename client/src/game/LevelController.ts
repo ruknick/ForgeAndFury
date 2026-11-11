@@ -47,7 +47,8 @@ export class LevelController implements BoardHooks {
         ({ seed, burials, maxRelics } = this.session);
         this.inventory = (await api.inventory(this.playerId)).relics.filter((r) => r.state === 'in_game');
       } catch (e) {
-        toast(`Offline: ${(e as Error).message}. Relics are disabled.`, 'error', 4000);
+        const offline = (e as ApiError).status === 0;
+        toast(`${offline ? 'Offline' : 'Server error'}: ${(e as Error).message}. Relics are disabled.`, 'error', 4000);
       }
     }
     this.run = new LevelRun(this.level, seed, burials, maxRelics);
@@ -281,7 +282,7 @@ export class LevelController implements BoardHooks {
 
     $('hud-objectives').replaceChildren(
       ...(r.level.id === 0 ? [h('div', { class: 'obj' }, h('span', { class: 'g' }, '🏋️'), 'Free play')] : r.objectives().map((o) => {
-        const glyph = o.tile ? tileTypeDef(o.tile).glyph : o.label === 'relics' ? '⚱️' : '🏆';
+        const glyph = o.tile ? tileTypeDef(o.tile).glyph : o.label === 'relics' ? '⚱️' : o.label === 'walls' ? '🧱' : '🏆';
         const fmt = (n: number) => (o.label === 'score' ? n.toLocaleString() : n);
         return h('div', { class: `obj ${o.current >= o.target ? 'done' : ''}` }, h('span', { class: 'g' }, glyph), `${fmt(o.current)} / ${fmt(o.target)}`);
       })),

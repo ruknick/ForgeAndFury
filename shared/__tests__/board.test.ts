@@ -190,3 +190,28 @@ describe('shuffle', () => {
     expect(findRuns(b)).toHaveLength(0);
   });
 });
+
+describe('fortress walls', () => {
+  it('a wall takes a hit when a neighboring tile clears, then opens and refills', () => {
+    const b = boardFrom(['SSSW', 'WFIA', 'AHFI']);
+    // wall below the middle S, 1 hp
+    b.walls[idx(b, 1, 1)] = 1;
+    b.blocked[idx(b, 1, 1)] = true;
+    b.tiles[idx(b, 1, 1)] = null;
+    const steps = resolveBoard(b, createRng(1));
+    expect(steps[0].wallHits).toEqual([{ pos: { r: 1, c: 1 }, remaining: 0 }]);
+    expect(b.blocked[idx(b, 1, 1)]).toBe(false);
+    expect(b.tiles[idx(b, 1, 1)]).not.toBeNull();
+  });
+
+  it('reinforced walls need two hits, and walls never match or fall', () => {
+    const b = boardFrom(['SSSW', 'WFIA', 'AHFI']);
+    b.walls[idx(b, 1, 1)] = 2;
+    b.blocked[idx(b, 1, 1)] = true;
+    b.tiles[idx(b, 1, 1)] = null;
+    const steps = resolveBoard(b, createRng(1));
+    expect(steps[0].wallHits[0].remaining).toBe(1);
+    expect(b.blocked[idx(b, 1, 1)]).toBe(true);
+    expect(b.tiles[idx(b, 1, 1)]).toBeNull();
+  });
+});

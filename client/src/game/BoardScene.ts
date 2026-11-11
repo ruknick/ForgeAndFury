@@ -33,6 +33,7 @@ export class BoardScene extends Phaser.Scene {
   private hooks!: BoardHooks;
   private sprites = new Map<number, Img>();
   private burialViews = new Map<string, Phaser.GameObjects.Container>();
+  private wallViews = new Map<number, Phaser.GameObjects.Container>();
   private tileLayer!: Phaser.GameObjects.Container;
   private overlayLayer!: Phaser.GameObjects.Container;
   private fxLayer!: Phaser.GameObjects.Container;
@@ -52,6 +53,7 @@ export class BoardScene extends Phaser.Scene {
     this.hooks = data.hooks;
     this.sprites = new Map();
     this.burialViews = new Map();
+    this.wallViews = new Map();
     this.selected = null;
     this.down = null;
   }
@@ -62,7 +64,7 @@ export class BoardScene extends Phaser.Scene {
     bg.fillStyle(0x140e09, 1).fillRect(0, 0, b.cols * CELL, b.rows * CELL);
     for (let r = 0; r < b.rows; r++)
       for (let c = 0; c < b.cols; c++) {
-        if (b.blocked[idx(b, r, c)]) {
+        if (b.blocked[idx(b, r, c)] && !b.walls[idx(b, r, c)]) {
           bg.fillStyle(0x0b0805, 1).fillRect(c * CELL, r * CELL, CELL, CELL);
           bg.lineStyle(2, 0x2a1f15, 1).strokeRect(c * CELL + 8, r * CELL + 8, CELL - 16, CELL - 16);
           continue;
@@ -77,6 +79,7 @@ export class BoardScene extends Phaser.Scene {
 
     b.tiles.forEach((t, i) => t && this.addSprite(t, { r: Math.floor(i / b.cols), c: i % b.cols }));
     b.burials.forEach((bur, i) => bur && this.drawBurial(bur, { r: Math.floor(i / b.cols), c: i % b.cols }));
+    b.walls.forEach((hp, i) => hp > 0 && this.drawWall(i, hp));
     // Mask so spawning tiles appear from the top edge, not over the HUD.
     const maskShape = this.make.graphics({}).fillStyle(0xffffff).fillRect(0, 0, b.cols * CELL, b.rows * CELL);
     this.tileLayer.setMask(maskShape.createGeometryMask());
@@ -211,6 +214,51 @@ export class BoardScene extends Phaser.Scene {
         const bur = { id: h.burialId, depth: 2, remaining: h.remaining };
         this.drawBurial(bur, h.pos);
         this.cameras.main.shake(80, 0.004);
+      }
+    }
+  }
+
+  // ------------------------------------------------------------ walls (fortress)
+
+  private drawWall(i: number, hp: number) {
+    this.wallViews.get(i)?.destroy();
+    const pos = { r: Math.floor(i / this.board.cols), c: i % this.board.cols };
+    const v = this.add.container(cx(pos.c), cy(pos.r));
+    const g = this.add.graphics();
+    const s = CELL - 8;
+    // wooden palisade: vertical stakes with pointed tops, iron bands if reinforced
+    for (let k = 0; k < 4; k++) {
+      const x = -s / 2 + k * (s / 4);
+      const w = s / 4 - 2;
+      g.fillStyle(k % 2 ? 0x7a4a24 : 0x8b5a2b).fillRect(x + 1, -s / 2 + 10, w, s - 10);
+      g.fillTriangle(x + 1, -s / 2 + 10, x + 1 + w, -s / 2 + 10, x + 1 + w / 2, -s / 2);
+      g.lineStyle(2, 0x3b2410, 0.8).strokeRect(x + 1, -s / 2 + 10, w, s - 10);
+    }
+    if (hp > 1) {
+      g.fillStyle(0x6f7a86).fillRect(-s / 2, -6, s, 8).fillRect(-s / 2, s / 2 - 16, s, 8);
+      for (let k = 0; k < 4; k++) g.fillStyle(0xcfd6de).fillCircle(-s / 2 + 8 + k * (s / 4), -2, 2.5);
+    }
+    v.add(g);
+    this.overlayLayer.add(v);
+    this.wallViews.set(i, v);
+  }
+
+  private hitWalls(hits: { pos: Pos; remaining: number }[]) {
+    if (!hits.length) return;
+    sfx.crack();
+    this.cameras.main.shake(90, 0.004);
+    for (const h of hits) {
+      const i = idx(this.board, h.pos.r, h.pos.c);
+      this.burst(h.pos, 0x8b5a2b, 10);
+      if (h.remaining > 0) {
+        this.drawWall(i, h.remaining);
+        const v = this.wallViews.get(i)!;
+        this.tweens.add({ targets: v, angle: { from: -6, to: 0 }, duration: 200, ease: 'Back.easeOut' });
+      } else {
+        const v = this.wallViews.get(i);
+        this.wallViews.delete(i);
+        if (v) this.tweens.add({ targets: v, y: v.y + 20, alpha: 0, angle: 12, duration: 280, onComplete: () => v.destroy() });
+        this.ring(h.pos, 0xd9a066, 1.8);
       }
     }
   }
@@ -393,6 +441,7 @@ export class BoardScene extends Phaser.Scene {
     if (toClear.length) sfx.clear(k);
     await this.animateClear(toClear);
     this.hitBurials(step.burialHits);
+    this.hitWalls(step.wallHits ?? []);
     if (step.score) {
       const p = step.cleared[Math.floor(step.cleared.length / 2)]?.pos;
       if (p) this.floatText(`+${step.score}`, cx(p.c), cy(p.r), '#ffffff', 26);

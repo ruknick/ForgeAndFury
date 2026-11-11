@@ -74,6 +74,7 @@ Defaults chosen while building the prototype, mostly where the spec marked an **
 | 3 The Forge | 28 moves, 25 Iron + 25 Fire, corners blocked, 2 burials, one guaranteed **Sword** | ~61% |
 | 4 The Burial Mound | 9×8, 22 moves, unearth all 5 (1 deep), 2 blocked cells | ~63% |
 | 5 Warlord's Keep | 9×9, 26 moves, score 3,200, 3 deep burials, boss drop table (10% Legendary) | ~20% |
+| 6 The Palisade | 17 moves, **fortress**: smash 10 palisade walls (4 reinforced = 2 hits), 2 fixed burials | ~59% |
 | 0 Endless | the M1 sandbox: unlimited moves, no burials | – |
 
 Targets and star thresholds were tuned with `npm run balance`. That script plays each level 60+ times with a greedy bot and reports win rate and score percentiles. Stars sit at roughly the 30th, 70th and 90th percentile of winning scores. The original guesses (e.g. 9,000 points for level 5) turned out to be unwinnable.
@@ -90,6 +91,8 @@ All levels can be selected from the start (no lock), so it's easy to demo. Progr
 - **Sound:** every effect is synthesized with WebAudio (`client/src/audio.ts`), so there are no audio files to license. Clear chimes climb in pitch with each cascade, and the reveal jingle gets longer for rarer relics. A 🔊/🔇 toggle sits in the HUD and is remembered per device.
 - **Forge meter** (`shared/config/forge.ts`): clearing Iron and Fire charges it (24 tiles). When full, tapping ⚒️ hammers 3 random plain tiles into 2 Battle Axes and a Powder Keg. It's free: no move and no relic slot. It's part of the deterministic `LevelRun`, so the server's replay covers it. A level can turn it off with `"forge": false`.
 
+- **Fortress walls** (stretch objective): level JSON `walls: [{r, c, hp}]`. A wall fills its cell and counts as blocked (no tile, no matching, and tiles fall past it) until it breaks. It takes **one hit per cascade step** when any orthogonally adjacent tile is cleared, so big effects next to a wall hit it once per step, not once per tile. When it breaks, the cell opens and gravity fills it. Each hit is worth +30 score. Random burials never land on walls.
+
 ## Not done yet
 
-- Xaman wallet connect (needs Xaman developer API keys). The `fortress` objective (stretch goal) is not implemented.
+- Xaman wallet connect (needs Xaman developer API keys).

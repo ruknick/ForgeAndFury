@@ -15,7 +15,8 @@ import type { BoardState, BurialHit, ClearedTile, Pos, Rarity, RelicTarget, Step
 export type Objective =
   | { type: 'collect'; tile?: TileType; count?: number; targets?: { tile: TileType; count: number }[] }
   | { type: 'score'; score: number }
-  | { type: 'unearth' };
+  | { type: 'unearth' }
+  | { type: 'fortress' };
 
 export interface BurialConfig {
   mode: 'random' | 'fixed';
@@ -41,6 +42,8 @@ export interface LevelDef {
   dropTableOverride: Partial<DropTable> | null;
   stars: [number, number, number];
   tileTypes?: TileType[];
+  /** Palisade walls (fortress levels). They break when tiles next to them are cleared. */
+  walls?: { r: number; c: number; hp?: number }[];
   /** Set false to disable the Forge meter on this level. */
   forge?: boolean;
 }
@@ -82,7 +85,7 @@ export interface ObjectiveProgress {
 
 export function placeBurials(level: LevelDef, rng: Rng): PlacedBurial[] {
   const cfg = level.burials;
-  const blocked = new Set(level.blocked.map((p) => p.r * level.cols + p.c));
+  const blocked = new Set([...level.blocked, ...(level.walls ?? [])].map((p) => p.r * level.cols + p.c));
   if (cfg.mode === 'fixed') {
     return (cfg.cells ?? []).map((c, k) => ({ id: `b${k + 1}`, pos: { r: c.r, c: c.c }, depth: c.depth ?? cfg.depth ?? 1 }));
   }
@@ -121,7 +124,7 @@ export class LevelRun {
     const types = level.tileTypes ?? TILE_TYPES.map((t) => t.id);
     const weights = types.map((id) => TILE_TYPES.find((t) => t.id === id)?.weight ?? 1);
     this.board = createBoard(
-      { rows: level.rows, cols: level.cols, blocked: level.blocked, tileTypes: types, tileWeights: weights, burials },
+      { rows: level.rows, cols: level.cols, blocked: level.blocked, walls: level.walls, tileTypes: types, tileWeights: weights, burials },
       this.rng,
     );
     this.movesLeft = level.moves;
@@ -229,6 +232,10 @@ export class LevelRun {
         return [{ label: 'score', current: Math.min(this.score, o.score), target: o.score }];
       case 'unearth':
         return [{ label: 'relics', current: this.revealed.length, target: this.burials.length }];
+      case 'fortress': {
+        const total = this.level.walls?.length ?? 0;
+        return [{ label: 'walls', current: total - this.board.walls.filter((w) => w > 0).length, target: total }];
+      }
     }
   }
 

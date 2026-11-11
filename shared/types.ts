@@ -27,6 +27,8 @@ export interface BoardState {
   blocked: boolean[];
   tiles: (Tile | null)[];
   burials: (Burial | null)[];
+  /** Wall hit points per cell (0 = no wall). A walled cell counts as blocked until its wall breaks. */
+  walls: number[];
   tileTypes: TileType[];
   tileWeights: number[];
   nextId: number;
@@ -52,12 +54,18 @@ export interface BurialHit {
   revealed: boolean;
 }
 
+export interface WallHit {
+  pos: Pos;
+  remaining: number;
+}
+
 export interface Step {
   cleared: ClearedTile[];
   created: ClearedTile[];
   converted: ClearedTile[];
   fx: Fx[];
   burialHits: BurialHit[];
+  wallHits: WallHit[];
   falls: { tileId: number; from: Pos; to: Pos }[];
   spawns: { tile: Tile; to: Pos; fromRow: number }[];
   score: number;

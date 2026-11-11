@@ -4,6 +4,7 @@ import l2 from './level2.json';
 import l3 from './level3.json';
 import l4 from './level4.json';
 import l5 from './level5.json';
+import l6 from './level6.json';
 
 /** Level 0 is the endless sandbox board from milestone M1. */
 export const ENDLESS: LevelDef = {
@@ -20,7 +21,7 @@ export const ENDLESS: LevelDef = {
   stars: [5000, 15000, 40000],
 };
 
-export const LEVELS: LevelDef[] = [l1, l2, l3, l4, l5] as LevelDef[];
+export const LEVELS: LevelDef[] = [l1, l2, l3, l4, l5, l6] as LevelDef[];
 
 export function getLevel(id: number): LevelDef | undefined {
   return id === 0 ? ENDLESS : LEVELS.find((l) => l.id === id);

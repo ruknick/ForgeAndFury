@@ -1,0 +1,79 @@
+{
+  "id": 6,
+  "name": "The Palisade",
+  "intro": "Break down the enemy palisade! Clear tiles right next to the wooden walls to smash them. Reinforced walls take two hits.",
+  "rows": 8,
+  "cols": 8,
+  "blocked": [],
+  "walls": [
+    {
+      "r": 4,
+      "c": 0,
+      "hp": 2
+    },
+    {
+      "r": 4,
+      "c": 1
+    },
+    {
+      "r": 4,
+      "c": 2,
+      "hp": 2
+    },
+    {
+      "r": 4,
+      "c": 3
+    },
+    {
+      "r": 4,
+      "c": 4
+    },
+    {
+      "r": 4,
+      "c": 5,
+      "hp": 2
+    },
+    {
+      "r": 4,
+      "c": 6
+    },
+    {
+      "r": 4,
+      "c": 7,
+      "hp": 2
+    },
+    {
+      "r": 6,
+      "c": 2
+    },
+    {
+      "r": 6,
+      "c": 5
+    }
+  ],
+  "moves": 17,
+  "objective": {
+    "type": "fortress"
+  },
+  "burials": {
+    "mode": "fixed",
+    "cells": [
+      {
+        "r": 7,
+        "c": 3,
+        "depth": 1
+      },
+      {
+        "r": 7,
+        "c": 4,
+        "depth": 1
+      }
+    ]
+  },
+  "dropTableOverride": null,
+  "stars": [
+    1200,
+    2100,
+    2400
+  ]
+}

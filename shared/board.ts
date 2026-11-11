@@ -4,7 +4,7 @@
  * can animate it, and so the server can replay a move log deterministically.
  */
 import { pickWeighted, type Rng } from './rng';
-import type { BoardState, Burial, BurialHit, ClearedTile, Fx, Pos, SpecialKind, Step, Tile, TileType } from './types';
+import type { BoardState, Burial, BurialHit, ClearedTile, Fx, Pos, SpecialKind, Step, Tile, TileType, WallHit } from './types';
 
 export const SCORE_PER_TILE = 10;
 export const SCORE_PER_SPECIAL = 30;
@@ -47,6 +47,7 @@ export function cloneBoard(b: BoardState): BoardState {
     blocked: [...b.blocked],
     tiles: b.tiles.map((t) => (t ? { ...t } : null)),
     burials: b.burials.map((x) => (x ? { ...x } : null)),
+    walls: [...b.walls],
     tileTypes: [...b.tileTypes],
     tileWeights: [...b.tileWeights],
   };
@@ -67,6 +68,7 @@ export interface BoardOptions {
   tileTypes: TileType[];
   tileWeights?: number[];
   burials?: { id: string; pos: Pos; depth: number }[];
+  walls?: { r: number; c: number; hp?: number }[];
 }
 
 export function emptyBoard(opts: BoardOptions): BoardState {
@@ -77,11 +79,17 @@ export function emptyBoard(opts: BoardOptions): BoardState {
     blocked: new Array(n).fill(false),
     tiles: new Array(n).fill(null),
     burials: new Array(n).fill(null),
+    walls: new Array(n).fill(0),
     tileTypes: [...opts.tileTypes],
     tileWeights: opts.tileWeights ? [...opts.tileWeights] : opts.tileTypes.map(() => 1),
     nextId: 1,
   };
   for (const p of opts.blocked ?? []) b.blocked[idx(b, p.r, p.c)] = true;
+  for (const w of opts.walls ?? []) {
+    const i = idx(b, w.r, w.c);
+    b.walls[i] = Math.max(1, w.hp ?? 1);
+    b.blocked[i] = true; // walls block play until broken
+  }
   for (const bur of opts.burials ?? []) {
     const i = idx(b, bur.pos.r, bur.pos.c);
     if (b.blocked[i]) throw new Error(`Burial ${bur.id} placed on blocked cell`);
@@ -359,6 +367,22 @@ export function resolveBoard(b: BoardState, rng: Rng, opts: ResolveOptions = {})
         if (revealed) b.burials[i] = null;
       }
     }
+    // Walls take one hit per step from any orthogonally adjacent cleared tile ("matched next to").
+    const wallHits: WallHit[] = [];
+    const hitWalls = new Set<number>();
+    for (const i of res.cleared) {
+      const { r, c } = posOf(b, i);
+      for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        if (!inBounds(b, r + dr, c + dc)) continue;
+        const j = idx(b, r + dr, c + dc);
+        if (b.walls[j] > 0) hitWalls.add(j);
+      }
+    }
+    for (const j of hitWalls) {
+      b.walls[j]--;
+      if (b.walls[j] === 0) b.blocked[j] = false; // opens up; gravity fills it below
+      wallHits.push({ pos: posOf(b, j), remaining: b.walls[j] });
+    }
     const created: ClearedTile[] = [];
     for (const cr of creations) {
       if (b.tiles[cr.i]) continue;
@@ -368,7 +392,7 @@ export function resolveBoard(b: BoardState, rng: Rng, opts: ResolveOptions = {})
     }
     const score = cleared.length * SCORE_PER_TILE * (cascade + 1) + created.length * SCORE_PER_SPECIAL;
     const { falls, spawns } = applyGravity(b, rng);
-    steps.push({ cleared, created, converted, fx, burialHits, falls, spawns, score, collected });
+    steps.push({ cleared, created, converted, fx, burialHits, wallHits, falls, spawns, score: score + wallHits.length * SCORE_PER_SPECIAL, collected });
     prefer = [...falls.map((f) => idx(b, f.to.r, f.to.c)), ...spawns.map((s) => idx(b, s.to.r, s.to.c))];
   }
   return steps;

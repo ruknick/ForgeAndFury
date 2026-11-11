@@ -88,6 +88,7 @@ function objectiveText(id: number) {
   const o = l.objective;
   if (o.type === 'collect') return 'Collect ' + (o.targets ?? [{ tile: o.tile!, count: o.count! }]).map((t) => `${t.count} ${t.tile}`).join(' & ');
   if (o.type === 'score') return `Score ${o.score.toLocaleString()}`;
+  if (o.type === 'fortress') return `Smash ${l.walls?.length ?? 0} palisade walls`;
   return 'Unearth every relic';
 }
 

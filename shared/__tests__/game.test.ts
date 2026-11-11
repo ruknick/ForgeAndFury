@@ -180,3 +180,14 @@ describe('Forge meter', () => {
     expect(run.forgeCharge).toBe(0);
   });
 });
+
+describe('fortress objective', () => {
+  it('wins when every wall is broken', () => {
+    const level = LEVELS.find((l) => l.objective.type === 'fortress')!;
+    const run = new LevelRun(level, 5, placeBurials(level, createRng(5)));
+    expect(run.objectives()[0]).toMatchObject({ current: 0, target: level.walls!.length });
+    for (let k = 0; k < 3 && run.status === 'playing'; k++) run.useRelic('dragonfire_blade', {});
+    expect(run.objectives()[0].current).toBe(level.walls!.length);
+    expect(run.status).toBe('won');
+  });
+});

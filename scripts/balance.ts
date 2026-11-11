@@ -22,13 +22,14 @@ function bestMove(run: LevelRun) {
     let v = s0.score;
     for (const [t, n] of Object.entries(s0.collected)) if (want.has(t)) v += n * 40;
     if (o.type === 'unearth') v += s0.burialHits.length * 200;
+    if (o.type === 'fortress') v += s0.wallHits.length * 200;
     v += s0.created.length * 25;
     if (v > bestV) { bestV = v; best = [{ r, c }, { r: r + dr, c: c + dc }]; }
   }
   return best;
 }
 
-for (const level of LEVELS) {
+for (const level of LEVELS.filter((l) => !process.env.LEVEL || String(l.id) === process.env.LEVEL)) {
   let wins = 0, stars = 0, movesLeft = 0; const scores: number[] = []; const winScores: number[] = []; const prog: number[] = [];
   const N = Number(process.env.N ?? 60);
   for (let s = 1; s <= N; s++) {
