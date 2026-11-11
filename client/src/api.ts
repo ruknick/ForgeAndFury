@@ -14,7 +14,7 @@ export interface ServerConfig {
   relics: RelicDef[];
   dropTable: Record<Rarity, number>;
   levels: { id: number; name: string; dropTable: Record<Rarity, number> }[];
-  flags: { devGrant: boolean; enableNftDeposit: boolean; xrplConfigured: boolean; maxRelicsPerLevel: number };
+  flags: { demo?: boolean; devGrant: boolean; enableNftDeposit: boolean; xrplConfigured: boolean; maxRelicsPerLevel: number };
   network: { endpoint: string; explorer: string; issuer: string | null };
 }
 
@@ -49,7 +49,19 @@ export class ApiError extends Error {
   }
 }
 
+/** True for the static demo build (VITE_DEMO=1), where a stand-in server runs in the browser. */
+export const DEMO = import.meta.env.VITE_DEMO === '1';
+
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  if (DEMO) {
+    const { demoHandle, DemoError } = await import('./demoServer');
+    try {
+      return demoHandle(method, path, body) as T;
+    } catch (e) {
+      if (e instanceof DemoError) throw new ApiError(e.status, e.message);
+      throw e;
+    }
+  }
   let res: Response;
   try {
     res = await fetch(path, { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -79,6 +91,7 @@ export const api = {
   deposit: (playerId: string, nftokenId: string) => call<{ relic: OwnedRelic; txs: string[] }>('POST', `/api/players/${playerId}/deposit`, { nftokenId }),
   transfer: (playerId: string, nftokenId: string, to: { toPlayerId?: string; toAddress?: string }) =>
     call<{ txs?: string[]; offerId?: string; note?: string }>('POST', `/api/players/${playerId}/transfer`, { nftokenId, ...to }),
+  devGrant: (playerId: string, relicId: string) => call<{ relic: OwnedRelic }>('POST', '/api/dev/grant', { playerId, relicId }),
   stats: () => call<{ minted: Record<string, number>; burned: Record<string, number>; found: Record<string, number> }>('GET', '/api/stats'),
 
   get playerId(): string | null {

@@ -76,6 +76,10 @@ async function menu() {
       h('div', { class: 'row', style: 'justify-content:center' },
         h('button', { class: 'btn', onclick: () => armory() }, '🛡️ Armory'),
         h('button', { class: 'btn secondary', onclick: () => rates() }, '🎲 Drop rates')),
+      cfg?.flags.demo
+        ? h('div', { class: 'panel small muted', style: 'text-align:center' },
+            '🧪 Demo build: everything runs on this device and progress is saved here. Minting relics to XRPL needs the full game server. Grant yourself any relic in the Armory to try it.')
+        : null,
       h('div', { class: 'muted small', style: 'text-align:center' },
         me ? `Playing as ${me.name}` : 'Offline mode',
         cfg && !cfg.flags.xrplConfigured ? ' · XRPL not configured' : '',
@@ -272,12 +276,11 @@ async function armory() {
   const relicPick = h('select', {}, ...cfg.relics.map((d) => h('option', { value: d.id }, `${d.glyph} ${d.name}`))) as HTMLSelectElement;
   const devPanel = cfg.flags.devGrant
     ? h('div', { class: 'panel' },
-        h('h2', {}, '🧪 Dev: grant relic'),
+        h('h2', {}, cfg.flags.demo ? '🧪 Try any relic' : '🧪 Dev: grant relic'),
         h('div', { class: 'row' }, relicPick, busyBtn('Grant', async () => {
-          const res = await fetch('/api/dev/grant', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ playerId: me!.id, relicId: relicPick.value }) });
-          if (!res.ok) throw new Error('Grant failed');
+          await api.devGrant(me!.id, relicPick.value);
         }, 'btn small secondary')),
-        h('div', { class: 'muted small', style: 'margin-top:6px' }, 'DEV_GRANT=true on the server. Bypasses drops; never enable on a shared server.'))
+        h('div', { class: 'muted small', style: 'margin-top:6px' }, cfg.flags.demo ? 'Demo only: adds the relic to your inventory so you can try its effect.' : 'DEV_GRANT=true on the server. Bypasses drops; never enable on a shared server.'))
     : null;
 
   const supplyPanel = h('div', { class: 'panel' },

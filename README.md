@@ -44,6 +44,7 @@ npm run dev
 | `npm run build` | Builds the client to `dist/`. `npm run start:server` then serves the game and the API on :8787. |
 | `npm run xrpl:setup` | Creates and funds the issuer account (Testnet faucet) |
 | `npm run xrpl:smoke` | End-to-end Testnet check: mint, transfer, deposit, burn |
+| `npm run build:demo` | Static, server-free demo build. The server logic runs in the browser (no anti-cheat, no XRPL) and saves progress on the device. Writes `dist-demo/relic-clash.html`, one self-contained file you can host anywhere or open on a phone. |
 | `npm run balance` | Plays every level with a greedy bot and prints win rates and score percentiles, for tuning |
 
 ## How it fits together

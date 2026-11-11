@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "xrpl:setup": "tsx server/scripts/setupIssuer.ts",
     "xrpl:smoke": "tsx server/scripts/smoke.ts",
-    "balance": "tsx scripts/balance.ts"
+    "balance": "tsx scripts/balance.ts",
+    "build:demo": "VITE_DEMO=1 vite build && node scripts/singlefile.mjs"
   },
   "dependencies": {
     "dotenv": "^18.0.10",
