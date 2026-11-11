@@ -1,12 +1,25 @@
 {
   "id": 2,
   "name": "The Forest Camp",
-  "intro": "Gather 35 Wood for the palisade. Three relics lie buried in the camp.",
-  "rows": 8, "cols": 8,
+  "intro": "Gather 26 Wood for the palisade. Three relics lie buried in the camp.",
+  "rows": 8,
+  "cols": 8,
   "blocked": [],
-  "moves": 25,
-  "objective": { "type": "collect", "tile": "wood", "count": 35 },
-  "burials": { "mode": "random", "count": 3, "depth": 1 },
+  "moves": 27,
+  "objective": {
+    "type": "collect",
+    "tile": "wood",
+    "count": 26
+  },
+  "burials": {
+    "mode": "random",
+    "count": 3,
+    "depth": 1
+  },
   "dropTableOverride": null,
-  "stars": [1500, 3000, 5000]
+  "stars": [
+    1500,
+    2800,
+    3500
+  ]
 }

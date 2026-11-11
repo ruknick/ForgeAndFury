@@ -1,12 +1,35 @@
 {
   "id": 1,
   "name": "The Quarry",
-  "intro": "Swap neighboring tiles to line up 3. Collect 30 Stone. Something glints beneath the cracked tile...",
-  "rows": 8, "cols": 8,
+  "intro": "Swap neighboring tiles to line up 3. Collect 26 Stone. Something glints beneath the cracked tile...",
+  "rows": 8,
+  "cols": 8,
   "blocked": [],
   "moves": 25,
-  "objective": { "type": "collect", "tile": "stone", "count": 30 },
-  "burials": { "mode": "fixed", "cells": [{ "r": 6, "c": 3, "depth": 1 }], "guaranteed": [{ "rarity": "common" }] },
+  "objective": {
+    "type": "collect",
+    "tile": "stone",
+    "count": 26
+  },
+  "burials": {
+    "mode": "fixed",
+    "cells": [
+      {
+        "r": 6,
+        "c": 3,
+        "depth": 1
+      }
+    ],
+    "guaranteed": [
+      {
+        "rarity": "common"
+      }
+    ]
+  },
   "dropTableOverride": null,
-  "stars": [1000, 2500, 4000]
+  "stars": [
+    1000,
+    2300,
+    3000
+  ]
 }

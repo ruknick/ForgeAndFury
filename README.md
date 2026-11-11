@@ -44,6 +44,7 @@ npm run dev
 | `npm run build` | Builds the client to `dist/`. `npm run start:server` then serves the game and the API on :8787. |
 | `npm run xrpl:setup` | Creates and funds the issuer account (Testnet faucet) |
 | `npm run xrpl:smoke` | End-to-end Testnet check: mint, transfer, deposit, burn |
+| `npm run balance` | Plays every level with a greedy bot and prints win rates and score percentiles, for tuning |
 
 ## How it fits together
 

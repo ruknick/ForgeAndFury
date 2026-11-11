@@ -2,11 +2,64 @@
   "id": 3,
   "name": "The Forge",
   "intro": "Feed the forge: 25 Iron and 25 Fire. The smith's old Sword is buried here.",
-  "rows": 8, "cols": 8,
-  "blocked": [{ "r": 0, "c": 0 }, { "r": 0, "c": 7 }, { "r": 7, "c": 0 }, { "r": 7, "c": 7 }],
+  "rows": 8,
+  "cols": 8,
+  "blocked": [
+    {
+      "r": 0,
+      "c": 0
+    },
+    {
+      "r": 0,
+      "c": 7
+    },
+    {
+      "r": 7,
+      "c": 0
+    },
+    {
+      "r": 7,
+      "c": 7
+    }
+  ],
   "moves": 28,
-  "objective": { "type": "collect", "targets": [{ "tile": "iron", "count": 25 }, { "tile": "fire", "count": 25 }] },
-  "burials": { "mode": "fixed", "cells": [{ "r": 4, "c": 3, "depth": 1 }, { "r": 2, "c": 5, "depth": 1 }], "guaranteed": [{ "relicId": "sword" }] },
+  "objective": {
+    "type": "collect",
+    "targets": [
+      {
+        "tile": "iron",
+        "count": 25
+      },
+      {
+        "tile": "fire",
+        "count": 25
+      }
+    ]
+  },
+  "burials": {
+    "mode": "fixed",
+    "cells": [
+      {
+        "r": 4,
+        "c": 3,
+        "depth": 1
+      },
+      {
+        "r": 2,
+        "c": 5,
+        "depth": 1
+      }
+    ],
+    "guaranteed": [
+      {
+        "relicId": "sword"
+      }
+    ]
+  },
   "dropTableOverride": null,
-  "stars": [2000, 4000, 6500]
+  "stars": [
+    1500,
+    3300,
+    4100
+  ]
 }

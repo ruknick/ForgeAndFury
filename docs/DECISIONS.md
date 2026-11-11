@@ -67,14 +67,16 @@ Defaults chosen while building the prototype, mostly where the spec marked an **
 
 ## Levels (§9)
 
-| # | Setup |
-|---|---|
-| 1 The Quarry | 25 moves, collect 30 Stone, 1 fixed burial guaranteed **Common** |
-| 2 The Forest Camp | 25 moves, collect 35 Wood, 3 random burials |
-| 3 The Forge | 28 moves, 25 Iron + 25 Fire, corners blocked, 2 burials, one guaranteed **Sword** |
-| 4 The Burial Mound | 9×8, 26 moves, unearth all 5 (1 deep), 2 blocked cells |
-| 5 Warlord's Keep | 9×9, 24 moves, score 9,000, 3 deep burials, boss drop table (10% Legendary) |
-| 0 Endless | the M1 sandbox: unlimited moves, no burials |
+| # | Setup | Greedy-bot win rate (no relics) |
+|---|---|---|
+| 1 The Quarry | 25 moves, collect 26 Stone, 1 fixed burial guaranteed **Common** | ~92% |
+| 2 The Forest Camp | 27 moves, collect 26 Wood, 3 random burials | ~56% |
+| 3 The Forge | 28 moves, 25 Iron + 25 Fire, corners blocked, 2 burials, one guaranteed **Sword** | ~61% |
+| 4 The Burial Mound | 9×8, 22 moves, unearth all 5 (1 deep), 2 blocked cells | ~63% |
+| 5 Warlord's Keep | 9×9, 26 moves, score 3,200, 3 deep burials, boss drop table (10% Legendary) | ~20% |
+| 0 Endless | the M1 sandbox: unlimited moves, no burials | – |
+
+Targets and star thresholds were tuned with `npm run balance`. That script plays each level 60+ times with a greedy bot and reports win rate and score percentiles. Stars sit at roughly the 30th, 70th and 90th percentile of winning scores. The original guesses (e.g. 9,000 points for level 5) turned out to be unwinnable.
 
 All levels can be selected from the start (no lock), so it's easy to demo. Progress (best stars and score) is stored per player.
 

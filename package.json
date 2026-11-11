@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Relic Clash — warrior match-3 with tradable XRPL relics (prototype)",
+  "description": "Relic Clash \u2014 warrior match-3 with tradable XRPL relics (prototype)",
   "scripts": {
     "dev": "concurrently -n server,client -c yellow,cyan \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "tsx watch server/index.ts",
@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "xrpl:setup": "tsx server/scripts/setupIssuer.ts",
-    "xrpl:smoke": "tsx server/scripts/smoke.ts"
+    "xrpl:smoke": "tsx server/scripts/smoke.ts",
+    "balance": "tsx scripts/balance.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.10",
