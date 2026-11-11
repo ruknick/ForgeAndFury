@@ -53,7 +53,7 @@ export function createApp(cfg: Config, store: Store, xrpl: XrplService) {
       rarities: RARITY_INFO,
       dropTable: DEFAULT_DROP_TABLE,
       levels: LEVELS.map((l) => ({ id: l.id, name: l.name, dropTable: l.dropTableOverride ? normalizeTable(l.dropTableOverride) : DEFAULT_DROP_TABLE })),
-      flags: { enableNftDeposit: cfg.enableNftDeposit, xrplConfigured: xrpl.configured, maxRelicsPerLevel: cfg.maxRelicsPerLevel },
+      flags: { devGrant: cfg.devGrant, enableNftDeposit: cfg.enableNftDeposit, xrplConfigured: xrpl.configured, maxRelicsPerLevel: cfg.maxRelicsPerLevel },
       network: { endpoint: cfg.xrplNetwork, explorer: cfg.xrplExplorer, issuer: xrpl.configured ? xrpl.issuer().address : null },
     });
   });
@@ -322,6 +322,18 @@ export function createApp(cfg: Config, store: Store, xrpl: XrplService) {
     });
     res.json({ relic: withDef(row), txs: row.txHashes.map((h) => xrpl.explorerTx(h)) });
   });
+
+  /** DEV ONLY (DEV_GRANT=true): put a relic straight into a player's inventory, for testing effects. */
+  if (cfg.devGrant) {
+    app.post('/api/dev/grant', (req, res) => {
+      const p = player(String(req.body?.playerId));
+      const def = relicDef(String(req.body?.relicId));
+      const inst: RelicInstance = { instanceId: newId('rl'), relicId: def.id, ownerPlayerId: p.id, state: 'in_game', txHashes: [], createdAt: now() };
+      db().relics[inst.instanceId] = inst;
+      store.save();
+      res.json({ relic: withDef(inst) });
+    });
+  }
 
   app.get('/api/stats', (_req, res) => {
     res.json(db().stats);

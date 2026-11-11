@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a130d" />
+    <title>Relic Clash</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗡️</text></svg>" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="hud" hidden>
+        <div class="hud-top">
+          <button id="btn-quit" class="icon-btn" title="Back to menu">☰</button>
+          <div class="hud-title" id="hud-level"></div>
+          <div class="hud-moves"><span id="hud-moves">0</span><small>moves</small><span id="hud-shield" class="shield" hidden></span></div>
+        </div>
+        <div class="hud-row">
+          <div id="hud-objectives" class="objectives"></div>
+          <div class="score-box">
+            <div id="hud-score">0</div>
+            <div class="starbar"><div id="hud-starfill"></div><span class="tick" id="tick1"></span><span class="tick" id="tick2"></span></div>
+          </div>
+        </div>
+        <div id="hud-meters" class="meters"></div>
+      </header>
+      <main id="board"></main>
+      <footer id="relicbar" hidden>
+        <div id="relic-items" class="relic-items"></div>
+        <div id="relic-limit" class="relic-limit"></div>
+      </footer>
+      <div id="targetbar" hidden></div>
+    </div>
+    <div id="screen" class="screen" hidden></div>
+    <div id="modal" class="modal" hidden></div>
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

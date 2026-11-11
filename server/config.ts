@@ -12,6 +12,8 @@ export const config = {
   transferFee: Number(process.env.XRPL_TRANSFER_FEE ?? 5000),
   enableNftDeposit: bool(process.env.ENABLE_NFT_DEPOSIT, true),
   maxRelicsPerLevel: Number(process.env.MAX_RELICS_PER_LEVEL ?? 3),
+  /** Dev-only endpoint that grants relics without playing. Never enable on a shared server. */
+  devGrant: bool(process.env.DEV_GRANT, false),
 };
 
 export type Config = typeof config;
