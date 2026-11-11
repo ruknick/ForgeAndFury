@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { getLevel, LEVELS } from '../../shared/levels';
 import { RARITIES, RARITY_INFO } from '../../shared/relics';
+import { isMuted, setMuted, unlockAudio } from './audio';
 import { api, type OwnedRelic, type PlayerInfo, type ServerConfig } from './api';
 import { BoardScene, CELL } from './game/BoardScene';
 import { LevelController, type LevelOutcome } from './game/LevelController';
@@ -19,6 +20,15 @@ const game = new Phaser.Game({
   render: { antialias: true },
 });
 game.scene.add('board', BoardScene, false);
+
+document.addEventListener('pointerdown', unlockAudio, { once: true });
+const muteBtn = $('btn-mute');
+const paintMute = () => (muteBtn.textContent = isMuted() ? '🔇' : '🔊');
+muteBtn.onclick = () => {
+  setMuted(!isMuted());
+  paintMute();
+};
+paintMute();
 
 let cfg: ServerConfig | null = null;
 let me: PlayerInfo | null = null;

@@ -128,19 +128,21 @@ describe('relic flow', () => {
     expect(inv).toHaveLength(4);
 
     const run = new LevelRun(getLevel(4)!, rs.seed, rs.burials);
-    for (let k = 0; k < 2; k++) {
-      const use = await api('POST', `/api/sessions/${rs.sessionId}/use`, { instanceId: inv[k].instanceId });
+    // Two board clears uncover everything (one may be enough if cascades hit the deep burial twice).
+    let spent = 0;
+    while (run.status === 'playing') {
+      const use = await api('POST', `/api/sessions/${rs.sessionId}/use`, { instanceId: inv[spent].instanceId });
       expect(use.status).toBe(200);
-      run.useRelic('dragonfire_blade', {}, inv[k].instanceId);
+      run.useRelic('dragonfire_blade', {}, inv[spent++].instanceId);
     }
     expect(run.revealed).toHaveLength(5);
     for (const id of run.revealed) {
       const r = await api('POST', `/api/sessions/${rs.sessionId}/reveal`, { burialId: id, log: run.log });
       expect(r.status).toBe(200);
     }
-    // Using the same instance twice fails; a 3rd works; a 4th exceeds the limit.
+    // Using the same instance twice fails, and the per-level limit (3) holds.
     expect((await api('POST', `/api/sessions/${rs.sessionId}/use`, { instanceId: inv[0].instanceId })).status).toBe(409);
-    expect((await api('POST', `/api/sessions/${rs.sessionId}/use`, { instanceId: inv[2].instanceId })).status).toBe(200);
+    while (spent < 3) expect((await api('POST', `/api/sessions/${rs.sessionId}/use`, { instanceId: inv[spent++].instanceId })).status).toBe(200);
     expect((await api('POST', `/api/sessions/${rs.sessionId}/use`, { instanceId: inv[3].instanceId })).status).toBe(409);
 
     const fin = await api('POST', `/api/sessions/${rs.sessionId}/finish`, { log: run.log });

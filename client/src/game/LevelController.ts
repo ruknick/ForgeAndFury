@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { cloneBoard, findValidMove, posOf } from '../../../shared/board';
+import { FORGE } from '../../../shared/config/forge';
 import { TILE_TYPES, tileTypeDef } from '../../../shared/config/tiles';
 import { LevelRun, type ActionResult, type LevelDef } from '../../../shared/game';
 import { applyRelic } from '../../../shared/relicEffects';
@@ -7,6 +8,7 @@ import { RARITY_INFO } from '../../../shared/relics';
 import { createRng } from '../../../shared/rng';
 import type { Pos, RelicTarget } from '../../../shared/types';
 import { api, ApiError, type OwnedRelic, type SessionInfo } from '../api';
+import { sfx } from '../audio';
 import { $, h, rarityCss, showModal, toast } from '../ui';
 import { BoardScene, CELL, type BoardHooks } from './BoardScene';
 
@@ -53,6 +55,7 @@ export class LevelController implements BoardHooks {
     this.renderHud();
     this.renderRelicBar();
     $('btn-quit').onclick = () => this.quit();
+    $('forge-btn').onclick = () => this.strikeForge();
 
     this.game.scale.setGameSize(this.level.cols * CELL, this.level.rows * CELL);
     // The board container was hidden while in menus; make Phaser re-measure it.
@@ -107,6 +110,20 @@ export class LevelController implements BoardHooks {
     if (this.run.status !== 'playing') await this.end();
   }
 
+  private async strikeForge() {
+    if (!this.canInteract() || !this.run.canForge() || !this.scene) return;
+    this.cancelTargeting();
+    this.busy = true;
+    try {
+      const result = this.run.forge();
+      this.renderHud();
+      await this.after(result);
+    } finally {
+      this.busy = false;
+      this.renderHud();
+    }
+  }
+
   private async reveal(burialId: string, pos: Pos) {
     if (!this.session) {
       toast('A relic glints... but the server is offline.', 'error');
@@ -115,6 +132,7 @@ export class LevelController implements BoardHooks {
     try {
       const { relic } = await api.reveal(this.session.sessionId, burialId, this.run.log);
       this.scene?.flashReveal(pos, RARITY_INFO[relic.def.rarity].color, relic.def.glyph);
+      sfx.reveal(relic.def.rarity);
       this.found.push(relic);
       this.inventory.push(relic);
       await new Promise((r) => setTimeout(r, 450));
@@ -126,6 +144,8 @@ export class LevelController implements BoardHooks {
 
   private async end() {
     const status = this.run.status as 'won' | 'lost';
+    if (status === 'won') sfx.win();
+    else sfx.lose();
     if (this.session) await api.finish(this.session.sessionId, this.run.log).catch((e: Error) => toast(e.message, 'error'));
     await new Promise((r) => setTimeout(r, status === 'won' ? 500 : 300));
     this.finish({ status, score: this.run.score, stars: this.run.stars(), found: this.found });
@@ -260,12 +280,24 @@ export class LevelController implements BoardHooks {
     $('tick2').style.left = `${(r.level.stars[1] / top) * 100}%`;
 
     $('hud-objectives').replaceChildren(
-      ...r.objectives().map((o) => {
+      ...(r.level.id === 0 ? [h('div', { class: 'obj' }, h('span', { class: 'g' }, '🏋️'), 'Free play')] : r.objectives().map((o) => {
         const glyph = o.tile ? tileTypeDef(o.tile).glyph : o.label === 'relics' ? '⚱️' : '🏆';
         const fmt = (n: number) => (o.label === 'score' ? n.toLocaleString() : n);
         return h('div', { class: `obj ${o.current >= o.target ? 'done' : ''}` }, h('span', { class: 'g' }, glyph), `${fmt(o.current)} / ${fmt(o.target)}`);
-      }),
+      })),
     );
+    const forge = $<HTMLButtonElement>('forge-btn');
+    forge.hidden = !r.forgeEnabled;
+    const ready = r.canForge();
+    if (ready && !forge.classList.contains('ready')) sfx.forgeReady();
+    forge.classList.toggle('ready', ready);
+    forge.disabled = !ready;
+    $('forge-fill').style.height = `${(r.forgeCharge / FORGE.cost) * 100}%`;
+    $('forge-label').textContent = ready ? 'Strike!' : `${r.forgeCharge}/${FORGE.cost}`;
+    forge.title = ready
+      ? 'The Forge is hot! Tap to hammer 3 tiles into special tiles (free).'
+      : `The Forge: clear ${FORGE.inputs.join(' and ')} to charge it (${r.forgeCharge}/${FORGE.cost})`;
+
     $('hud-meters').replaceChildren(
       ...r.board.tileTypes.map((t) => h('div', { class: 'meter', title: tileTypeDef(t).name }, `${tileTypeDef(t).glyph} `, h('b', {}, r.collected[t] ?? 0))),
     );

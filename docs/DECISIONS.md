@@ -85,6 +85,11 @@ All levels can be selected from the start (no lock), so it's easy to demo. Progr
 - `DEV_GRANT=true` enables `POST /api/dev/grant` and a "Grant relic" panel in the Armory. **It bypasses anti-cheat; never enable it on a shared server.**
 - In dev builds, the current level controller is exposed as `window.__ctrl` for automated play-testing.
 
+## Polish (M5)
+
+- **Sound:** every effect is synthesized with WebAudio (`client/src/audio.ts`), so there are no audio files to license. Clear chimes climb in pitch with each cascade, and the reveal jingle gets longer for rarer relics. A 🔊/🔇 toggle sits in the HUD and is remembered per device.
+- **Forge meter** (`shared/config/forge.ts`): clearing Iron and Fire charges it (24 tiles). When full, tapping ⚒️ hammers 3 random plain tiles into 2 Battle Axes and a Powder Keg. It's free: no move and no relic slot. It's part of the deterministic `LevelRun`, so the server's replay covers it. A level can turn it off with `"forge": false`.
+
 ## Not done yet
 
-- M5 polish: sound, the Forge meter ability, and Xaman wallet connect are not implemented. The `fortress` objective (stretch goal) is not implemented.
+- Xaman wallet connect (needs Xaman developer API keys). The `fortress` objective (stretch goal) is not implemented.

@@ -3,7 +3,8 @@
  * The client drives it for gameplay; the server replays the same action log to
  * validate burial reveals (spec §7). Same seed + same actions = same board.
  */
-import { createBoard, findValidMove, resolveBoard, shuffleBoard, trySwap, type ShuffleResult } from './board';
+import { allPlayable, createBoard, findValidMove, posOf, resolveBoard, shuffleBoard, trySwap, type ShuffleResult } from './board';
+import { FORGE } from './config/forge';
 import { TILE_TYPES } from './config/tiles';
 import type { DropTable } from './rarity';
 import { applyRelic, convertToKegs, type RelicApplication } from './relicEffects';
@@ -40,6 +41,8 @@ export interface LevelDef {
   dropTableOverride: Partial<DropTable> | null;
   stars: [number, number, number];
   tileTypes?: TileType[];
+  /** Set false to disable the Forge meter on this level. */
+  forge?: boolean;
 }
 
 /** A burial as the client sees it: position and depth, never its contents. */
@@ -51,7 +54,8 @@ export interface PlacedBurial {
 
 export type Action =
   | { kind: 'swap'; a: Pos; b: Pos }
-  | { kind: 'relic'; relicId: string; instanceId?: string; target: RelicTarget };
+  | { kind: 'relic'; relicId: string; instanceId?: string; target: RelicTarget }
+  | { kind: 'forge' };
 
 export interface ActionResult {
   steps: Step[];
@@ -102,6 +106,7 @@ export class LevelRun {
   collected: Record<TileType, number> = {};
   freeMoves = 0;
   relicsUsed = 0;
+  forgeCharge = 0;
   revealed: string[] = [];
   status: RunStatus = 'playing';
   readonly log: Action[] = [];
@@ -161,6 +166,32 @@ export class LevelRun {
     return result;
   }
 
+  get forgeEnabled() {
+    return this.level.forge !== false;
+  }
+
+  canForge(): boolean {
+    return this.forgeEnabled && this.status === 'playing' && this.forgeCharge >= FORGE.cost;
+  }
+
+  /** Spends a full Forge meter: turns random plain tiles into specials. Free: no move, no relic slot. */
+  forge(): ActionResult {
+    if (!this.canForge()) throw new Error('The Forge is not ready');
+    this.forgeCharge = 0;
+    this.log.push({ kind: 'forge' });
+    const plain = allPlayable(this.board).filter((i) => this.board.tiles[i] && !this.board.tiles[i]!.special);
+    const converted: ClearedTile[] = [];
+    for (const special of FORGE.produces) {
+      if (!plain.length) break;
+      const i = plain.splice(this.rng.int(plain.length), 1)[0];
+      this.board.tiles[i] = { ...this.board.tiles[i]!, special };
+      converted.push({ pos: posOf(this.board, i), tile: this.board.tiles[i]! });
+    }
+    const result = this.finish([], false);
+    result.converted = converted;
+    return result;
+  }
+
   private spendMove() {
     if (this.freeMoves > 0) this.freeMoves--;
     else this.movesLeft--;
@@ -171,7 +202,10 @@ export class LevelRun {
     const revealed: BurialHit[] = [];
     for (const s of steps) {
       gained += s.score;
-      for (const [t, n] of Object.entries(s.collected)) this.collected[t] = (this.collected[t] ?? 0) + n;
+      for (const [t, n] of Object.entries(s.collected)) {
+        this.collected[t] = (this.collected[t] ?? 0) + n;
+        if (this.forgeEnabled && FORGE.inputs.includes(t)) this.forgeCharge = Math.min(FORGE.cost, this.forgeCharge + n);
+      }
       for (const h of s.burialHits) if (h.revealed) {
         this.revealed.push(h.burialId);
         revealed.push(h);
@@ -224,8 +258,12 @@ export function replayRun(level: LevelDef, seed: number, burials: PlacedBurial[]
   for (const [k, a] of log.entries()) {
     if (a.kind === 'swap') {
       if (!run.swap(a.a, a.b)) throw new Error(`Replay: invalid swap at action ${k}`);
-    } else {
+    } else if (a.kind === 'relic') {
       run.useRelic(a.relicId, a.target, a.instanceId);
+    } else if (a.kind === 'forge') {
+      run.forge();
+    } else {
+      throw new Error(`Replay: unknown action at ${k}`);
     }
   }
   return run;

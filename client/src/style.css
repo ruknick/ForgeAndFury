@@ -172,3 +172,16 @@ select, input[type=text] { background: #120c08; color: var(--text); border: 1px 
 @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes float { 50% { transform: translateY(-6px) rotate(-3deg); } }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------------------------------------------------------------- forge */
+.forge-btn {
+  position: relative; flex: 0 0 auto; width: 58px; height: 54px; border-radius: 12px; overflow: hidden; background: #1a120c;
+  border: 2px solid #7a4a24; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0;
+}
+.forge-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(0deg, #e0582a, #4f7896); opacity: 0.55; transition: height 0.35s; }
+.forge-icon { position: relative; font-size: 1.3rem; line-height: 1; }
+.forge-label { position: relative; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.forge-btn.ready { border-color: #ffb347; animation: forge-glow 1s ease-in-out infinite; }
+.forge-btn.ready .forge-label { color: #ffd9a0; font-weight: 700; }
+.forge-btn:disabled:not(.ready) { cursor: default; }
+@keyframes forge-glow { 50% { box-shadow: 0 0 16px #ff8a1a, inset 0 0 10px #ff8a1a; } }

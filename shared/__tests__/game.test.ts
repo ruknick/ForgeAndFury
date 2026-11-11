@@ -154,3 +154,29 @@ describe('relic effects', () => {
   it('Dragonfire Blade clears everything', () => expect(applyRelic(b(), 'dragonfire_blade', {}, rng).cells).toHaveLength(25));
   it('targeted relics require a target', () => expect(() => applyRelic(b(), 'sword', {}, rng)).toThrow());
 });
+
+describe('Forge meter', () => {
+  it('charges from Iron and Fire, then turns 3 tiles into specials, and replays exactly', async () => {
+    const { FORGE } = await import('../config/forge');
+    const run = new LevelRun(ENDLESS, 21, []);
+    expect(run.canForge()).toBe(false);
+    expect(() => run.forge()).toThrow();
+    const moves = allValidMoves(run);
+    const pick = createRng(4);
+    for (let n = 0; n < 200 && !run.canForge(); n++) while (!run.swap(...moves[pick.int(moves.length)]));
+    expect(run.forgeCharge).toBe(FORGE.cost);
+    const res = run.forge();
+    expect(res.converted).toHaveLength(3);
+    expect(res.converted!.map((c) => c.tile.special).sort()).toEqual(['axeCol', 'axeRow', 'keg']);
+    expect(run.forgeCharge).toBe(0);
+    expect(run.relicsUsed).toBe(0);
+    const replay = replayRun(ENDLESS, 21, [], run.log);
+    expect(JSON.stringify(replay.board.tiles)).toBe(JSON.stringify(run.board.tiles));
+  });
+
+  it('can be disabled per level', () => {
+    const run = new LevelRun({ ...ENDLESS, forge: false }, 21, []);
+    run.useRelic('dragonfire_blade', {});
+    expect(run.forgeCharge).toBe(0);
+  });
+});

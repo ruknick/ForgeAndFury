@@ -4,6 +4,7 @@ import { tileTypeDef } from '../../../shared/config/tiles';
 import type { ActionResult } from '../../../shared/game';
 import { sweepAngle } from '../../../shared/relicEffects';
 import { RARITY_INFO, relicDef } from '../../../shared/relics';
+import { sfx } from '../audio';
 import type { BoardState, Burial, BurialHit, ClearedTile, Fx, Pos, Step, Tile } from '../../../shared/types';
 
 export const CELL = 80;
@@ -206,6 +207,7 @@ export class BoardScene extends Phaser.Scene {
         this.burialViews.delete(h.burialId);
         this.ring(h.pos, 0xffe08a, 1.6);
       } else {
+        sfx.crack();
         const bur = { id: h.burialId, depth: 2, remaining: h.remaining };
         this.drawBurial(bur, h.pos);
         this.cameras.main.shake(80, 0.004);
@@ -270,6 +272,7 @@ export class BoardScene extends Phaser.Scene {
       this.select(null);
     } else {
       this.select(pos);
+      sfx.select();
     }
   }
 
@@ -347,8 +350,10 @@ export class BoardScene extends Phaser.Scene {
     const sb = this.spriteAt(b);
     if (!sa || !sb) return;
     const go = (s: Img, p: Pos) => this.tween({ targets: s, x: cx(p.c), y: cy(p.r), duration: 150, ease: 'Quad.easeInOut' });
+    sfx.swap();
     await Promise.all([go(sa, b), go(sb, a)]);
     if (!valid) {
+      sfx.invalid();
       await Promise.all([go(sa, a), go(sb, b)]);
       this.cameras.main.shake(60, 0.002);
       return;
@@ -364,7 +369,14 @@ export class BoardScene extends Phaser.Scene {
     this.select(null);
     this.previewGfx.clear();
     if (result.relic) await this.relicIntro(result.relic.relicId, result.relic.app.fx);
-    if (result.converted?.length) await this.animateConvert(result.converted);
+    if (result.converted?.length) {
+      if (!result.relic) {
+        sfx.forgeReady();
+        sfx.blast();
+        await this.bigGlyph('⚒️');
+      }
+      await this.animateConvert(result.converted);
+    }
     for (const [k, step] of result.steps.entries()) {
       let already = new Set<number>();
       if (k === 0 && result.relic) already = await this.relicStrike(result.relic.relicId, result.relic.app.fx, step);
@@ -377,7 +389,9 @@ export class BoardScene extends Phaser.Scene {
   private async playStep(step: Step, k: number, already: Set<number>) {
     this.playFx(step.fx.filter((f) => f.kind !== 'relic'));
     if (k >= 1) this.floatText(k >= 3 ? `Unstoppable! x${k + 1}` : `Cascade x${k + 1}`, (this.board.cols * CELL) / 2, (this.board.rows * CELL) / 2, '#ffd166', 30);
-    await this.animateClear(step.cleared.filter((c) => !already.has(c.tile.id)));
+    const toClear = step.cleared.filter((c) => !already.has(c.tile.id));
+    if (toClear.length) sfx.clear(k);
+    await this.animateClear(toClear);
     this.hitBurials(step.burialHits);
     if (step.score) {
       const p = step.cleared[Math.floor(step.cleared.length / 2)]?.pos;
@@ -388,7 +402,10 @@ export class BoardScene extends Phaser.Scene {
       this.tweens.add({ targets: img, scale: 1, duration: 260, ease: 'Back.easeOut' });
       this.ring(cr.pos, 0xffffff, 1.6);
     }
-    if (step.created.length) await this.wait(160);
+    if (step.created.length) {
+      sfx.special();
+      await this.wait(160);
+    }
     await this.animateFalls(step);
   }
 
@@ -437,6 +454,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   async animateShuffle(placements: { tileId: number; to: Pos; type: string | null }[]) {
+    sfx.shuffle();
     this.floatText('No moves — shuffling!', (this.board.cols * CELL) / 2, (this.board.rows * CELL) / 2, '#ffffff', 30);
     const mid = { x: (this.board.cols * CELL) / 2, y: (this.board.rows * CELL) / 2 };
     const imgs = placements.map((p) => this.sprites.get(p.tileId)).filter((x): x is Img => !!x);
@@ -458,6 +476,7 @@ export class BoardScene extends Phaser.Scene {
     const H = this.board.rows * CELL;
     for (const f of fx) {
       if (f.kind === 'row' || f.kind === 'col') {
+        sfx.axe();
         const beam = f.kind === 'row'
           ? this.add.rectangle(W / 2, cy(f.r), W, CELL * 0.5, 0xfff3c4, 0.9)
           : this.add.rectangle(cx(f.c), H / 2, CELL * 0.5, H, 0xfff3c4, 0.9);
@@ -470,12 +489,14 @@ export class BoardScene extends Phaser.Scene {
         this.fxLayer.add(axe);
         this.tweens.add({ targets: axe, angle: 720, alpha: 0, scale: 1.6, duration: 400, onComplete: () => axe.destroy() });
       } else if (f.kind === 'blast') {
+        sfx.blast();
         const boom = this.add.circle(cx(f.center.c), cy(f.center.r), CELL * (f.radius + 0.5), 0xffa23a, 0.75);
         this.fxLayer.add(boom);
         boom.setScale(0.2);
         this.tweens.add({ targets: boom, scale: 1.1, alpha: 0, duration: 380, ease: 'Cubic.easeOut', onComplete: () => boom.destroy() });
         this.cameras.main.shake(120, 0.006);
       } else if (f.kind === 'drum') {
+        sfx.drum();
         const g = this.add.graphics();
         this.fxLayer.add(g);
         g.lineStyle(3, 0xfff0a0, 0.9);
@@ -490,9 +511,11 @@ export class BoardScene extends Phaser.Scene {
   private async relicIntro(relicId: string, _fx: Fx[]) {
     const def = relicDef(relicId);
     if (relicId === 'war_horn') {
+      sfx.horn();
       await this.bigGlyph(def.glyph);
       this.floatText('+3 Moves!', (this.board.cols * CELL) / 2, (this.board.rows * CELL) / 2 + 60, '#9cf09a', 40);
     } else if (relicId === 'shield_wall') {
+      sfx.shield();
       await this.bigGlyph(def.glyph);
       this.floatText('Next 3 moves free!', (this.board.cols * CELL) / 2, (this.board.rows * CELL) / 2 + 60, '#9cc2ff', 34);
     } else if (relicId === 'warlords_banner' || relicId === 'war_hammer' || relicId === 'dragonfire_blade') {
@@ -521,11 +544,14 @@ export class BoardScene extends Phaser.Scene {
       case 'twin_axes': {
         if (!target) break;
         const glyph = relicDef(relicId).glyph;
+        sfx.launch();
         const p = this.add.text(W / 2, H + 40, glyph, { fontFamily: EMOJI_FONT, fontSize: '56px' }).setOrigin(0.5);
         this.fxLayer.add(p);
         await this.tween({ targets: p, x: cx(target.c), y: cy(target.r), angle: 360, duration: 280, ease: 'Quad.easeIn' });
         p.destroy();
         this.ring(target, color, 2.2);
+        if (relicId === 'torch' || relicId === 'fire_arrow') sfx.fire();
+        else sfx.crack();
         if (relicId === 'torch') {
           const flame = this.add.circle(cx(target.c), cy(target.r), CELL * 1.5, 0xff7a1a, 0.6);
           this.fxLayer.add(flame);
@@ -548,6 +574,7 @@ export class BoardScene extends Phaser.Scene {
       case 'catapult': {
         const blasts = fx.filter((x): x is Extract<Fx, { kind: 'blast' }> => x.kind === 'blast');
         await Promise.all(blasts.map((b, n) => {
+          this.time.delayedCall(n * 120, () => sfx.launch());
           const rock = this.add.text(n * (W / 2), H + 30, '🪨', { fontFamily: EMOJI_FONT, fontSize: '54px' }).setOrigin(0.5);
           this.fxLayer.add(rock);
           const sx = rock.x;
@@ -571,10 +598,13 @@ export class BoardScene extends Phaser.Scene {
         break;
       }
       case 'war_hammer':
+        sfx.blast();
         this.cameras.main.shake(300, 0.012);
         for (const c of step.cleared) if (c.tile.type === 'stone') this.ring(c.pos, 0xcfd3da, 1.6);
         break;
       case 'dragonfire_blade': {
+        sfx.fire();
+        sfx.blast();
         const wave = this.add.rectangle(W / 2, H + H / 2, W, H, 0xff4a1a, 0.7);
         this.fxLayer.add(wave);
         this.cameras.main.shake(500, 0.01);
@@ -596,6 +626,7 @@ export class BoardScene extends Phaser.Scene {
         break;
       }
       case 'warlords_banner':
+        sfx.drum();
         this.cameras.main.shake(250, 0.01);
         break;
     }
@@ -632,6 +663,7 @@ export class BoardScene extends Phaser.Scene {
     const pending = step.cleared
       .filter((c) => c !== center0 && Math.abs(c.pos.r - center.r) <= 1 && Math.abs(c.pos.c - center.c) <= 1)
       .map((c) => ({ c, a: sweepAngle(center, c.pos) }));
+    sfx.swordWhoosh();
     const o = { a: -0.44 };
     await this.tween({
       targets: o, a: Math.PI * 2, duration: 620, ease: 'Cubic.easeInOut',
@@ -654,6 +686,7 @@ export class BoardScene extends Phaser.Scene {
       },
     });
     trail.clear();
+    sfx.swordRing();
     this.cameras.main.shake(140, 0.006);
     await this.tween({ targets: blade, alpha: 0, scale: 1.25, duration: 200 });
     blade.destroy();

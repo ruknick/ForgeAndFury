@@ -13,6 +13,7 @@
         <div class="hud-top">
           <button id="btn-quit" class="icon-btn" title="Back to menu">☰</button>
           <div class="hud-title" id="hud-level"></div>
+          <button id="btn-mute" class="icon-btn" title="Sound on/off">🔊</button>
           <div class="hud-moves"><span id="hud-moves">0</span><small>moves</small><span id="hud-shield" class="shield" hidden></span></div>
         </div>
         <div class="hud-row">
@@ -26,6 +27,9 @@
       </header>
       <main id="board"></main>
       <footer id="relicbar" hidden>
+        <button id="forge-btn" class="forge-btn" title="The Forge: clear Iron and Fire to charge it">
+          <span class="forge-fill" id="forge-fill"></span><span class="forge-icon">⚒️</span><span class="forge-label" id="forge-label">Forge</span>
+        </button>
         <div id="relic-items" class="relic-items"></div>
         <div id="relic-limit" class="relic-limit"></div>
       </footer>
